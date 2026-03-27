@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: resume-analyzer-studio
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: prod
+      - key: ENABLE_TRACE
+        value: "false"
+      - key: OPENAI_API_KEY
+        sync: false

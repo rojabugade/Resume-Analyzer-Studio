@@ -213,6 +213,21 @@ docker-compose up
 # API runs on http://localhost:8000
 ```
 
+### Render (Recommended Quick Deploy)
+
+This repository includes `render.yaml` and a cloud-compatible `Dockerfile`.
+
+1. Push code to GitHub main (already done).
+2. In Render, create a new Web Service from this repository.
+3. Render auto-detects `render.yaml` and Docker runtime.
+4. Set secret env var:
+  - `OPENAI_API_KEY` (required only for live LLM calls)
+5. Deploy and verify:
+  - `/health` should return `{"status":"ok", ...}`
+
+Expected app URL pattern:
+- `https://resume-analyzer-studio.onrender.com/`
+
 ### Production (AWS ECS)
 ```bash
 # Build image
@@ -225,6 +240,13 @@ docker push <account>.dkr.ecr.us-east-1.amazonaws.com/resume-analyzer:latest
 
 # Deploy ECS task
 ```
+
+### CI Pipeline
+
+GitHub Actions workflow added at `.github/workflows/ci.yml`:
+- ruff lint
+- mypy type check
+- pytest test suite
 
 ## Scaling Ideas
 
