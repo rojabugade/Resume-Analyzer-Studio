@@ -1,0 +1,25 @@
+{
+  "skills": [
+    {"name": "Python", "category": "Programming Language"},
+    {"name": "JavaScript", "category": "Programming Language"},
+    {"name": "AWS", "category": "Cloud Platform"},
+    {"name": "Kubernetes", "category": "Containerization"},
+    {"name": "Docker", "category": "Containerization"},
+    {"name": "SQL", "category": "Database"},
+    {"name": "PostgreSQL", "category": "Database"},
+    {"name": "Machine Learning", "category": "AI/ML"},
+    {"name": "TensorFlow", "category": "ML Framework"},
+    {"name": "Leadership", "category": "Soft Skills"},
+    {"name": "Project Management", "category": "Soft Skills"},
+    {"name": "Communication", "category": "Soft Skills"}
+  ],
+  "proficiency_levels": ["Beginner", "Intermediate", "Expert"],
+  "industries": [
+    "Technology",
+    "Finance",
+    "Healthcare",
+    "Retail",
+    "Manufacturing",
+    "Consulting"
+  ]
+}
