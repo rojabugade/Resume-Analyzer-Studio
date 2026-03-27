@@ -207,6 +207,26 @@ make lint && make type && make test
 
 ## Deployment
 
+### Vercel (Recommended for your setup)
+
+This repository includes Vercel-ready config files:
+- `vercel.json`
+- `api/index.py`
+
+Steps:
+1. Import GitHub repo into Vercel.
+2. Framework preset: `Other` (or let Vercel auto-detect).
+3. Root directory: repository root.
+4. Add environment variables in Vercel Project Settings:
+  - `OPENAI_API_KEY` (optional if running no-key demo path)
+  - `ENVIRONMENT=prod`
+  - `ENABLE_TRACE=false`
+5. Deploy.
+6. Verify:
+  - `/health`
+  - `/`
+  - `/docs`
+
 ### Docker Compose (Local)
 ```bash
 docker-compose up
