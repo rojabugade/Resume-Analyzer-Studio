@@ -217,13 +217,32 @@ docker-compose up
 
 This repository includes `render.yaml` and a cloud-compatible `Dockerfile`.
 
-1. Push code to GitHub main (already done).
+1. Push code to GitHub main.
 2. In Render, create a new Web Service from this repository.
 3. Render auto-detects `render.yaml` and Docker runtime.
 4. Set secret env var:
   - `OPENAI_API_KEY` (required only for live LLM calls)
 5. Deploy and verify:
   - `/health` should return `{"status":"ok", ...}`
+
+#### Make It Live in 3 Minutes
+
+1. Open Render and create the service from this GitHub repo.
+2. Wait for first deployment to complete.
+3. Open the generated URL and test root page + `/health`.
+4. Add your custom domain in Render settings (optional).
+
+#### One-Click Re-Deploy from GitHub Actions
+
+This repo includes `.github/workflows/render-deploy.yml`.
+
+1. In Render, create a Deploy Hook URL for your service.
+2. In GitHub repo settings -> Secrets and variables -> Actions, add:
+  - `RENDER_DEPLOY_HOOK_URL`
+3. Run workflow:
+  - Actions -> Deploy to Render -> Run workflow
+
+This triggers a live redeploy without opening Render manually.
 
 Expected app URL pattern:
 - `https://resume-analyzer-studio.onrender.com/`
