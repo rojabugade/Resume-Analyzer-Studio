@@ -1,4 +1,4 @@
-# AI-Agent System: Resume Analyzer & Job Matcher (Production-Ready Showcase)
+# AI-Agent System: Resume Analyzer & Job Matcher
 
 A comprehensive, interview-ready AI agent system that analyzes resumes, matches them against jobs, identifies skill gaps, and provides personalized recommendations. Built with modern agent patterns: RAG, tool-calling, multi-agent orchestration, memory, and guardrails.
 
