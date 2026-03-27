@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from pathlib import Path
 
 from langchain_chroma import Chroma
@@ -38,13 +39,29 @@ def _build_embedding_model() -> Embeddings:
 
 class JobVectorStore:
     def __init__(self) -> None:
-        persist_dir = Path("data/chroma").resolve()
-        persist_dir.mkdir(parents=True, exist_ok=True)
-        self._store = Chroma(
-            collection_name="jobs",
-            embedding_function=_build_embedding_model(),
-            persist_directory=str(persist_dir),
-        )
+        self._store: Chroma | None = None
+        self._fallback_docs: list[Document] = []
+        self._init_store()
+
+    @staticmethod
+    def _resolve_persist_directory() -> Path:
+        # Vercel serverless file system is read-only except /tmp.
+        if os.getenv("VERCEL"):
+            return Path("/tmp/chroma").resolve()
+        return Path("data/chroma").resolve()
+
+    def _init_store(self) -> None:
+        persist_dir = self._resolve_persist_directory()
+        try:
+            persist_dir.mkdir(parents=True, exist_ok=True)
+            self._store = Chroma(
+                collection_name="jobs",
+                embedding_function=_build_embedding_model(),
+                persist_directory=str(persist_dir),
+            )
+        except Exception:
+            # Keep app operational in constrained serverless environments.
+            self._store = None
 
     @staticmethod
     def _job_to_doc(job: JobProfile) -> Document:
@@ -68,11 +85,26 @@ class JobVectorStore:
 
     def ingest_jobs(self, jobs: list[JobProfile]) -> None:
         docs = [self._job_to_doc(job) for job in jobs]
-        ids = [doc.metadata.get("job_id", f"job_{idx}") for idx, doc in enumerate(docs)]
-        self._store.add_documents(documents=docs, ids=ids)
+        if self._store is not None:
+            ids = [doc.metadata.get("job_id", f"job_{idx}") for idx, doc in enumerate(docs)]
+            self._store.add_documents(documents=docs, ids=ids)
+            return
+
+        # Fallback retrieval corpus when vector backend is unavailable.
+        self._fallback_docs.extend(docs)
 
     def retrieve(self, query: str, k: int = 5) -> list[dict[str, object]]:
-        docs = self._store.similarity_search(query, k=k)
+        if self._store is not None:
+            docs = self._store.similarity_search(query, k=k)
+        else:
+            query_tokens = set(query.lower().split())
+            ranked = sorted(
+                self._fallback_docs,
+                key=lambda doc: len(query_tokens.intersection(doc.page_content.lower().split())),
+                reverse=True,
+            )
+            docs = ranked[:k]
+
         results: list[dict[str, object]] = []
         for idx, doc in enumerate(docs):
             rank_score = max(0.0, 1.0 - (idx / max(1, k)))
