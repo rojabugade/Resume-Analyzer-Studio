@@ -101,6 +101,26 @@ def test_target_match_text_flow() -> None:
     assert "guardrail_notes" in data
 
 
+def test_target_match_text_flow_repeat_requests() -> None:
+    """Repeated target-match calls should remain stable without ingestion conflicts."""
+    payload = {
+        "user_id": "target_user_repeat",
+        "resume_text": "Backend Engineer\nSkills: Python, AWS, SQL\nExperience: Built APIs.",
+        "job_description": (
+            "Hiring backend engineer with Python, SQL, API design, and reliability experience."
+        ),
+        "query": "Match my resume",
+    }
+
+    first = client.post("/v1/resume/run-target", json=payload)
+    second = client.post("/v1/resume/run-target", json=payload)
+
+    assert first.status_code == 200
+    assert second.status_code == 200
+    assert first.json()["success"]
+    assert second.json()["success"]
+
+
 def test_target_match_upload_flow() -> None:
     """Test multipart upload flow with plain text files."""
     files = {

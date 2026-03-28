@@ -41,6 +41,7 @@ class JobVectorStore:
     def __init__(self) -> None:
         self._store: Chroma | None = None
         self._fallback_docs: list[Document] = []
+        self._ingested_ids: set[str] = set()
         self._init_store()
 
     @staticmethod
@@ -85,13 +86,30 @@ class JobVectorStore:
 
     def ingest_jobs(self, jobs: list[JobProfile]) -> None:
         docs = [self._job_to_doc(job) for job in jobs]
-        if self._store is not None:
-            ids = [doc.metadata.get("job_id", f"job_{idx}") for idx, doc in enumerate(docs)]
-            self._store.add_documents(documents=docs, ids=ids)
+        incoming_ids = [doc.metadata.get("job_id", f"job_{idx}") for idx, doc in enumerate(docs)]
+
+        pending_docs: list[Document] = []
+        pending_ids: list[str] = []
+        for doc, job_id in zip(docs, incoming_ids):
+            if job_id in self._ingested_ids:
+                continue
+            pending_docs.append(doc)
+            pending_ids.append(job_id)
+
+        if not pending_docs:
             return
 
-        # Fallback retrieval corpus when vector backend is unavailable.
-        self._fallback_docs.extend(docs)
+        if self._store is not None:
+            try:
+                self._store.add_documents(documents=pending_docs, ids=pending_ids)
+                self._ingested_ids.update(pending_ids)
+                return
+            except Exception:
+                # Continue with fallback corpus if vector backend rejects writes.
+                self._store = None
+
+        self._fallback_docs.extend(pending_docs)
+        self._ingested_ids.update(pending_ids)
 
     def retrieve(self, query: str, k: int = 5) -> list[dict[str, object]]:
         if self._store is not None:

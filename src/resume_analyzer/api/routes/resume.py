@@ -160,12 +160,16 @@ def run_workflow(payload: RunWorkflowRequest) -> RunWorkflowResponse:
 @router.post("/run-target", response_model=TargetMatchResponse)
 def run_target_match(payload: TargetMatchRequest) -> TargetMatchResponse:
     """Match a resume against a user-provided target job description."""
-    result = TargetMatchService.run(
-        user_id=payload.user_id,
-        resume_text=payload.resume_text,
-        job_description=payload.job_description,
-        query=payload.query,
-    )
+    try:
+        result = TargetMatchService.run(
+            user_id=payload.user_id,
+            resume_text=payload.resume_text,
+            job_description=payload.job_description,
+            query=payload.query,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Target matching failed") from exc
+
     return TargetMatchResponse(**cast(dict[str, Any], result))
 
 
@@ -197,10 +201,14 @@ async def run_target_match_upload(
     if not resolved_job:
         raise HTTPException(status_code=400, detail="Job description text or file is required")
 
-    result = TargetMatchService.run(
-        user_id=user_id,
-        resume_text=resolved_resume,
-        job_description=resolved_job,
-        query=query,
-    )
+    try:
+        result = TargetMatchService.run(
+            user_id=user_id,
+            resume_text=resolved_resume,
+            job_description=resolved_job,
+            query=query,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Upload matching failed") from exc
+
     return TargetMatchResponse(**cast(dict[str, Any], result))
