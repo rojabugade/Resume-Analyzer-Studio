@@ -182,10 +182,15 @@ async def run_target_match_upload(
     resolved_resume = (resume_text or "").strip()
     resolved_job = (job_description or "").strip()
 
-    if not resolved_resume and resume_file:
-        resolved_resume = await FileTextExtractor.extract_text_from_upload(resume_file)
-    if not resolved_job and job_file:
-        resolved_job = await FileTextExtractor.extract_text_from_upload(job_file)
+    try:
+        if not resolved_resume and resume_file:
+            resolved_resume = await FileTextExtractor.extract_text_from_upload(resume_file)
+        if not resolved_job and job_file:
+            resolved_job = await FileTextExtractor.extract_text_from_upload(job_file)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
 
     if not resolved_resume:
         raise HTTPException(status_code=400, detail="Resume text or file is required")

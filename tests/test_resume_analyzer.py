@@ -126,3 +126,24 @@ def test_target_match_upload_flow() -> None:
     assert payload["success"]
     assert isinstance(payload["confidence"], float)
     assert isinstance(payload["improvement_suggestions"], list)
+
+
+def test_target_match_upload_invalid_pdf_returns_400() -> None:
+    """Invalid PDF bytes should return a user-facing 400 error."""
+    files = {
+        "resume_file": (
+            "resume.pdf",
+            b"%PDF-not-a-valid-pdf",
+            "application/pdf",
+        ),
+    }
+    data = {
+        "user_id": "target_user_003",
+        "job_description": "Need Python backend engineer with API and SQL experience.",
+        "query": "Match uploaded resume with typed JD",
+    }
+
+    response = client.post("/v1/resume/run-upload", data=data, files=files)
+    assert response.status_code == 400
+    detail = response.json().get("detail", "")
+    assert "Unable to parse PDF" in detail

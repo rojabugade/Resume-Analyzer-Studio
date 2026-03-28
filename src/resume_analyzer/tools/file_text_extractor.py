@@ -25,6 +25,8 @@ class FileTextExtractor:
         filename = upload.filename or "upload.bin"
         payload = await upload.read()
         await upload.close()
+        if not payload:
+            raise ValueError(f"Uploaded file is empty: {filename}")
         return FileTextExtractor.extract_text_from_bytes(filename, payload)
 
     @staticmethod
@@ -34,9 +36,17 @@ class FileTextExtractor:
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError("pypdf is required for PDF extraction") from exc
 
-        reader = PdfReader(BytesIO(data))
-        chunks = [page.extract_text() or "" for page in reader.pages]
-        return "\n".join(chunks).strip()
+        try:
+            reader = PdfReader(BytesIO(data))
+            chunks = [page.extract_text() or "" for page in reader.pages]
+            text = "\n".join(chunks).strip()
+            if not text:
+                raise ValueError("PDF contains no extractable text")
+            return text
+        except Exception as exc:
+            raise ValueError(
+                "Unable to parse PDF. File may be encrypted, scanned-only, or invalid."
+            ) from exc
 
     @staticmethod
     def _extract_docx(data: bytes) -> str:
@@ -45,6 +55,12 @@ class FileTextExtractor:
         except ImportError as exc:  # pragma: no cover
             raise RuntimeError("python-docx is required for DOCX extraction") from exc
 
-        document = Document(BytesIO(data))
-        lines = [para.text for para in document.paragraphs if para.text]
-        return "\n".join(lines).strip()
+        try:
+            document = Document(BytesIO(data))
+            lines = [para.text for para in document.paragraphs if para.text]
+            text = "\n".join(lines).strip()
+            if not text:
+                raise ValueError("DOCX contains no extractable text")
+            return text
+        except Exception as exc:
+            raise ValueError("Unable to parse DOCX. File may be invalid or corrupted.") from exc
